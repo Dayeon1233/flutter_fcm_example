@@ -1,9 +1,12 @@
 import 'dart:io';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -36,9 +39,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-
-
-
   @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
@@ -48,26 +48,25 @@ class _MyHomePageState extends State<MyHomePage> {
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
     return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: const Center(
-        child: Text('fcm test'),
-      )
-    );
+        appBar: AppBar(
+          // TRY THIS: Try changing the color here to a specific color (to
+          // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
+          // change color while the other colors stay the same.
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          // Here we take the value from the MyHomePage object that was created by
+          // the App.build method, and use it to set our appbar title.
+          title: Text(widget.title),
+        ),
+        body: const Center(
+          child: Text('fcm test'),
+        ));
   }
 
   void firebaseCloudMessaging_Listeners() {
     if (Platform.isIOS) iOS_Permission();
 
-    _firebaseMessaging.getToken().then((token){
-      print('token:'+(token ?? 'null'));
+    _firebaseMessaging.getToken().then((token) {
+      print('token:' + (token ?? 'null'));
     });
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -79,12 +78,14 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void iOS_Permission() {
-    _firebaseMessaging.requestPermission(
+    _firebaseMessaging
+        .requestPermission(
       alert: true,
       badge: true,
       sound: true,
       provisional: false,
-    ).then((settings) {
+    )
+        .then((settings) {
       print('Settings registered: $settings');
     });
   }
@@ -92,5 +93,11 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
+    init();
+  }
+
+  void init() async {
+    final fcmToken = await _firebaseMessaging.getToken();
+    print('fcmToken: $fcmToken');
   }
 }
