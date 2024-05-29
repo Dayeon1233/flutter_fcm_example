@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "256034812149",
+    "project_id": "pushexamplechouchou",
+    "storage_bucket": "pushexamplechouchou.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:256034812149:android:3d265f34b72062ee7355bc",
+        "android_client_info": {
+          "package_name": "com.example.push_example"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBwGdU_U0Pl3HckXHdAIGldInArz90BuKU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
