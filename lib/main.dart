@@ -102,5 +102,20 @@ class _MyHomePageState extends State<MyHomePage> {
   void init() async {
     final fcmToken = await _firebaseMessaging.getToken();
     print('fcmToken: $fcmToken');
+    setFCM();
+  }
+  Future<void> setFCM() async {
+    NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
+      alert: true,
+      badge: true,
+      provisional: false,
+      sound: true,
+    );
+    // iOS foreground notification 권한
+    await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
   }
 }
