@@ -1,15 +1,27 @@
-import 'dart:io';
-
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
 import 'firebase_options.dart';
+
+const AndroidNotificationChannel channel = AndroidNotificationChannel(
+  'high_importance_channel', // id
+  'High Importance Notifications', // title
+  importance: Importance.high,
+);
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
+      ?.createNotificationChannel(channel);
+
   runApp(const MyApp());
 }
 
@@ -44,20 +56,9 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
         appBar: AppBar(
-          // TRY THIS: Try changing the color here to a specific color (to
-          // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-          // change color while the other colors stay the same.
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          // Here we take the value from the MyHomePage object that was created by
-          // the App.build method, and use it to set our appbar title.
           title: Text(widget.title),
         ),
         body: const Center(
@@ -66,30 +67,15 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void firebaseCloudMessaging_Listeners() {
-    if (Platform.isIOS) iOS_Permission();
-
     _firebaseMessaging.getToken().then((token) {
       print('token:' + (token ?? 'null'));
     });
-
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('on message $message');
-    });
+    //
+    // FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    //   print('on message $message');
+    // });
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       print('on resume $message');
-    });
-  }
-
-  void iOS_Permission() {
-    _firebaseMessaging
-        .requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-      provisional: false,
-    )
-        .then((settings) {
-      print('Settings registered: $settings');
     });
   }
 
@@ -97,6 +83,27 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     init();
+    firebaseCloudMessaging_Listeners();
+
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      RemoteNotification? notification = message.notification;
+      AndroidNotification? android = message.notification?.android;
+      if (notification != null && android != null) {
+        flutterLocalNotificationsPlugin.show(
+          notification.hashCode,
+          notification.title,
+          notification.body,
+          NotificationDetails(
+            android: AndroidNotificationDetails(
+              channel.id,
+              channel.name,
+              channelDescription: channel.description,
+              icon: 'launch_background',
+            ),
+          ),
+        );
+      }
+    });
   }
 
   void init() async {
@@ -104,15 +111,18 @@ class _MyHomePageState extends State<MyHomePage> {
     print('fcmToken: $fcmToken');
     setFCM();
   }
+
   Future<void> setFCM() async {
-    NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
+    NotificationSettings settings =
+        await FirebaseMessaging.instance.requestPermission(
       alert: true,
       badge: true,
       provisional: false,
       sound: true,
     );
     // iOS foreground notification 권한
-    await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+    await FirebaseMessaging.instance
+        .setForegroundNotificationPresentationOptions(
       alert: true,
       badge: true,
       sound: true,
